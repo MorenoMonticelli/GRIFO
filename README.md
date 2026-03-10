@@ -32,6 +32,10 @@ pip install -r requirements.txt
 python GRIFO.py
 ```
 
+## Interface Preview
+
+![GRIFO main interface](/Users/morenomonticelli/PhD/OARPAF/GRIFO/GRIFO-visual.png)
+
 ## Citation
 
 If you use the Batman transit fitting mode in GRIFO, please cite the original `batman` package paper:
