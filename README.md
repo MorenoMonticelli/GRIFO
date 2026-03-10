@@ -34,7 +34,7 @@ python GRIFO.py
 
 ## Interface Preview
 
-![GRIFO main interface](/Users/morenomonticelli/PhD/OARPAF/GRIFO/GRIFO-visual.png)
+![GRIFO main interface](GRIFO-visual.png)
 
 ## Citation
 
