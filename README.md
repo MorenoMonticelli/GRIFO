@@ -6,8 +6,8 @@ GRIFO (Graphical Reduction and Inference for exoplanetary transit Observations) 
 
 - FITS loading and frame inspection
 - Frame alignment
-- Target/comparison star coordinate workflow
-- Aperture photometry
+- Target/comparison star selection
+- Aperture differential photometry
 - Detrending
 - Final fitting step with:
   - Batman transit MCMC
