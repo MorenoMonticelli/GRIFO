@@ -837,6 +837,7 @@ GRAY_LUT = _gray_lut()
 
 class HoverImageWidget(QtWidgets.QWidget):
     hoverChanged = QtCore.Signal(float, float)
+    clickedAt = QtCore.Signal(float, float)
 
     def __init__(self, parent=None, title=""):
         super().__init__(parent)
@@ -874,6 +875,7 @@ class HoverImageWidget(QtWidgets.QWidget):
             rateLimit=60,
             slot=self._on_mouse_moved,
         )
+        self.plot.scene().sigMouseClicked.connect(self._on_mouse_clicked)
 
         lay.addWidget(self.plot)
 
@@ -966,6 +968,20 @@ class HoverImageWidget(QtWidgets.QWidget):
         self.cursor_text.setText(f"x={x:.1f}, y={y:.1f}")
         self.cursor_text.setPos(x + 1.5, y_plot + 1.5)
         self.hoverChanged.emit(x, y)
+
+    def _on_mouse_clicked(self, evt):
+        if evt.button() != QtCore.Qt.LeftButton:
+            return
+        pos = evt.scenePos()
+        if not self.plot.sceneBoundingRect().contains(pos):
+            return
+
+        vb = self.plot.getPlotItem().vb
+        mouse_point = vb.mapSceneToView(pos)
+        x = float(mouse_point.x())
+        y_plot = float(mouse_point.y())
+        y = float(self._to_data_y(y_plot))
+        self.clickedAt.emit(x, y)
 
 
 class CornerDialog(QtWidgets.QDialog):
@@ -1756,6 +1772,9 @@ class ExoTransitMainWindow(QtWidgets.QMainWindow):
 
         self.stars_max_frames = QtWidgets.QSpinBox()
         frm.addRow("Max frames for all-frame refine", self.stars_max_frames)
+        self.stars_click_target = QtWidgets.QComboBox()
+        self.stars_click_target.addItems(["target", "comp1", "comp2", "comp3", "comp4"])
+        frm.addRow("Click on image updates", self.stars_click_target)
 
         left_lay.addLayout(frm)
 
@@ -1823,8 +1842,9 @@ class ExoTransitMainWindow(QtWidgets.QMainWindow):
         right_lay = QtWidgets.QVBoxLayout(right)
         self.stars_image = HoverImageWidget(title="Frame with chosen stars")
         self.stars_image.hoverChanged.connect(self._stars_hover_text)
+        self.stars_image.clickedAt.connect(self._on_stars_image_clicked)
         right_lay.addWidget(self.stars_image)
-        self.stars_hover_lbl = QtWidgets.QLabel("Hover anywhere to read x,y. Enter coordinates manually in the left panel.")
+        self.stars_hover_lbl = QtWidgets.QLabel("Hover anywhere to read x,y. Click to assign x,y to the selected star.")
         self.stars_hover_lbl.setObjectName("summaryText")
         right_lay.addWidget(self.stars_hover_lbl)
 
@@ -1883,7 +1903,32 @@ class ExoTransitMainWindow(QtWidgets.QMainWindow):
         self._show_info("Rounded all coordinates to integer pixels.")
 
     def _stars_hover_text(self, x, y):
-        self.stars_hover_lbl.setText(f"Hover x={x:.1f}, y={y:.1f}  |  Enter coordinates manually in the left panel.")
+        self.stars_hover_lbl.setText(f"Hover x={x:.1f}, y={y:.1f}  |  Click to set the selected star.")
+
+    def _on_stars_image_clicked(self, x, y):
+        cube = self.active_cube()
+        if cube is None:
+            return
+
+        ny, nx = cube.shape[1], cube.shape[2]
+        x = float(np.clip(x, 0.0, max(nx - 1, 0)))
+        y = float(np.clip(y, 0.0, max(ny - 1, 0)))
+
+        name = str(self.stars_click_target.currentText()).strip()
+        if name not in ["target", "comp1", "comp2", "comp3", "comp4"]:
+            name = "target"
+
+        self.stars[name]["x"] = x
+        self.stars[name]["y"] = y
+        if name != "target":
+            self.stars["enabled"][name] = True
+
+        self.sync_star_widgets_from_state()
+        self.update_stars_view()
+        self.update_phot_inspect_options()
+        self.update_phot_cutout()
+
+        self.stars_status.setText(f"Set {name} to x={x:.2f}, y={y:.2f} via image click.")
 
     def _star_overlay_points(self):
         points = [
