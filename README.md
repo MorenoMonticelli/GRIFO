@@ -24,3 +24,32 @@ GRIFO (Graphical Reduction and Inference for exoplanetary transit Observations) 
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+```
+
+## Run
+
+```bash
+python GRIFO.py
+```
+
+## Citation
+
+If you use the Batman transit fitting mode in GRIFO, please cite the original `batman` package paper:
+
+- Kreidberg, L. (2015), *Publications of the Astronomical Society of the Pacific*, 127, 1161-1165.
+- DOI: [10.1086/683602](https://doi.org/10.1086/683602)
+
+BibTeX:
+
+```bibtex
+@article{Kreidberg2015,
+  author = {Kreidberg, Laura},
+  title = {batman: BAsic Transit Model cAlculatioN in Python},
+  journal = {Publications of the Astronomical Society of the Pacific},
+  volume = {127},
+  number = {957},
+  pages = {1161--1165},
+  year = {2015},
+  doi = {10.1086/683602}
+}
+```
